@@ -1,0 +1,1155 @@
+config folder
+---------------------------
+Configurations.java
+------------------------------
+package com.wecp.eventmanagementsystem.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+// import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+// import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+@Configuration
+public class Configurations {
+
+    // @Bean
+    // public PasswordEncoder passwordEncoder() {
+    //     return new BCryptPasswordEncoder();
+    // }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurerAdapter() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**").allowedMethods("GET", "POST", "PUT", "DELETE").allowedOrigins("*")
+                        .allowedHeaders("*");
+            }
+        };
+    }
+}
+
+------------------------------------------------------------------
+
+SecurityConfig.java
+--------------------------------------------------------------
+
+// package com.wecp.eventmanagementsystem.config;
+
+// import com.wecp.eventmanagementsystem.jwt.JwtRequestFilter;
+// import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.context.annotation.Bean;
+// import org.springframework.context.annotation.Configuration;
+// import org.springframework.http.HttpMethod;
+// import org.springframework.security.authentication.AuthenticationManager;
+// import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+// import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+// import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+// import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+// import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+// import org.springframework.security.config.http.SessionCreationPolicy;
+// import org.springframework.security.core.userdetails.UserDetailsService;
+// import org.springframework.security.crypto.password.PasswordEncoder;
+// import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+
+// public class SecurityConfig extends WebSecurityConfigurerAdapter {
+//     private final UserDetailsService userDetailsService;
+//     private final JwtRequestFilter jwtRequestFilter;
+//     private final PasswordEncoder passwordEncoder;
+
+//     @Autowired
+//     public SecurityConfig(UserDetailsService userDetailsService,
+//                           JwtRequestFilter jwtRequestFilter,
+//                           PasswordEncoder passwordEncoder) {
+//         this.userDetailsService = userDetailsService;
+//         this.jwtRequestFilter = jwtRequestFilter;
+//         this.passwordEncoder = passwordEncoder;
+//     }
+
+//     @Override
+//     protected void configure(HttpSecurity http) throws Exception {
+//         // TODO: implement the security configuration
+
+//         // configure CORS and CSRF
+//         // configure the routes that are accessible without authentication
+//         // configure the routes that are accessible with specific roles
+//         // set the permission w.r.t to authorities
+//         // - /api/user/register: accessible to everyone
+//         // - /api/user/login: accessible to everyone
+//         // - /api/planner/event: accessible to PLANNER authority
+//         // - /api/planner/events: accessible to PLANNER authority
+//         // - /api/planner/resource: accessible to PLANNER authority
+//         // - /api/planner/resources: accessible to PLANNER authority
+//         // - /api/planner/allocate-resources: accessible to PLANNER authority
+//         // - /api/staff/event-details/{eventId}: accessible to STAFF authority
+//         // - /api/staff/update-setup/{eventId}: accessible to STAFF authority
+//         // - /api/client/booking-details/{eventId}: accessible to CLIENT authority
+//         // - any other route: accessible to authenticated users
+//         // configure the session management
+//         // add the jwtRequestFilter before the UsernamePasswordAuthenticationFilter
+
+//     }
+
+
+//     @Override
+//     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+//         auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
+//     }
+//     @Bean
+//     @Override
+//     public AuthenticationManager authenticationManagerBean() throws Exception {
+//         return super.authenticationManagerBean();
+//     }
+// }
+
+
+-----------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+controllers
+-----------------------------------------------------------------------------------------------
+ClientController.java
+--------------------------------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.controller;
+
+import com.wecp.eventmanagementsystem.entity.Event;
+import com.wecp.eventmanagementsystem.service.EventService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+
+@RestController
+public class ClientController {
+
+    @Autowired
+    private EventService eventService;
+
+
+    @GetMapping("/api/client/booking-details/{eventId}")
+    public ResponseEntity<Event> getBookingDetails(@PathVariable Long eventId) {
+        // get event details by event id and return with status code 200 OK
+        return new ResponseEntity<Event>(eventService.getEventDetails(eventId), HttpStatus.OK);
+    }
+}
+
+--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+EventPlannerController.java
+-----------------------------------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.controller;
+
+
+import com.wecp.eventmanagementsystem.entity.Allocation;
+import com.wecp.eventmanagementsystem.entity.Event;
+import com.wecp.eventmanagementsystem.entity.Resource;
+import com.wecp.eventmanagementsystem.entity.User;
+import com.wecp.eventmanagementsystem.service.EventService;
+import com.wecp.eventmanagementsystem.service.ResourceService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+public class EventPlannerController {
+
+    @Autowired
+    private EventService eventService;
+
+    @Autowired
+    private ResourceService resourceService;
+
+
+    @PostMapping("/api/planner/event")
+    public ResponseEntity<Event> createEvent(@RequestBody Event event) {
+        // create event and return created event with status code 201 (CREATED)
+
+        return new ResponseEntity<Event>(eventService.createEvent(event), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/api/planner/events")
+    public ResponseEntity<List<Event>> getAllEvents() {
+        // get all events and return the list with status code 200 (OK)
+        return new ResponseEntity<>(eventService.getAllEvents(),HttpStatus.OK);
+    }
+
+    @PostMapping("/api/planner/resource")
+    public ResponseEntity<Resource> addResource(@RequestBody Resource resource) {
+        // add resource and return added resource with status code 201 (CREATED)
+        return new ResponseEntity<>(resourceService.addResource(resource),HttpStatus.CREATED);
+
+    }
+
+    @GetMapping("/api/planner/resources")
+    public ResponseEntity<List<Resource>> getAllResources() {
+        // get all resources and return the list with status code 200 (OK)
+        return new ResponseEntity<>(resourceService.getAllResources(),HttpStatus.OK);
+    }
+
+    @PostMapping("/api/planner/allocate-resources")
+    public ResponseEntity<String> allocateResources(@RequestParam Long eventId, @RequestParam Long resourceId,
+            @RequestBody Allocation allocation) {
+
+        // allocate resources for the event and return a success message with status code 201 (CREATED)
+        resourceService.allocateResources(eventId, resourceId, allocation);
+        return new ResponseEntity<>("{\"message\": \"Resource allocated successfully for Event ID: " + eventId + "\"}", HttpStatus.CREATED);
+    }
+
+   
+}
+
+--------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+RegisterAndLoginController.java
+-----------------------------------------------------
+package com.wecp.eventmanagementsystem.controller;
+
+
+import com.wecp.eventmanagementsystem.dto.LoginRequest;
+import com.wecp.eventmanagementsystem.dto.LoginResponse;
+import com.wecp.eventmanagementsystem.entity.User;
+// import com.wecp.eventmanagementsystem.jwt.JwtUtil;
+import com.wecp.eventmanagementsystem.service.UserService;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+// import org.springframework.security.authentication.AuthenticationManager;
+// import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+// import org.springframework.security.core.AuthenticationException;
+// import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+@RestController
+public class RegisterAndLoginController {
+
+    @Autowired
+    private UserService userService;    
+
+    @PostMapping("/api/user/register")
+    public ResponseEntity<User> registerUser(@RequestBody User user) {
+       // register user and return the registered user with status code 201 created
+       return new ResponseEntity<>(userService.registerUser(user),HttpStatus.CREATED);
+    }
+
+    @PostMapping("/api/user/login")
+    public ResponseEntity<LoginResponse> loginUser(@RequestBody LoginRequest loginRequest) {
+         // login user and return the login response with status code 200 ok
+        // if authentication fails, return status code 401 unauthorized
+        return null;
+    }
+    @GetMapping("/api/users")
+    public ResponseEntity<List<User>> getAllUser(){
+        return new ResponseEntity<>(userService.getAllUser(),HttpStatus.OK) ;
+    }
+}
+
+
+------------------------------------------------------------------------------------------------------
+StaffController.java
+--------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.controller;
+
+
+import com.wecp.eventmanagementsystem.entity.Event;
+import com.wecp.eventmanagementsystem.service.EventService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+public class StaffController {
+
+    @Autowired
+    private EventService eventService;
+
+
+    @GetMapping("/api/staff/event-details/{eventId}")
+    public ResponseEntity<Event> getEventDetails(@PathVariable Long eventId) {
+        // get the event details by eventId and return the event with status code 200 ok
+        return new ResponseEntity<Event>(eventService.getEventDetails(eventId), HttpStatus.OK);
+    }
+
+    @PutMapping("/api/staff/update-setup/{eventId}")
+    public ResponseEntity<Event> updateEventSetup(@PathVariable Long eventId, @RequestBody Event updatedEvent) {
+        // update the event setup and return the updated event with status code 200 ok
+        return new ResponseEntity<>(eventService.updateEventSetup(eventId, updatedEvent),HttpStatus.OK);
+    }
+}
+
+---------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
+dto
+------------------------
+LoginRequest.java
+------------------------
+package com.wecp.eventmanagementsystem.dto;
+
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class LoginRequest {
+
+    private String username;
+    private String password;
+
+    @JsonCreator
+    public LoginRequest(@JsonProperty("username") String username, @JsonProperty("password") String password) {
+        this.username = username;
+        this.password = password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+
+--------------------------------------------------------------------
+---------------------------------------------------------------------
+LoginResponse.java
+-------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.dto;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class LoginResponse {
+    private String token;
+    private String username;
+    private String email;
+    private String role;
+
+    
+    @JsonCreator
+    public LoginResponse(@JsonProperty("token") String token,
+                         @JsonProperty("username") String username,
+                            @JsonProperty("email") String email,
+                            @JsonProperty("role") String role) {
+        this.token = token;
+        this.username = username;
+        this.email = email;
+        this.role = role;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+}
+
+-------------------------------------------------------------
+entity
+--------------------------------------------------------------
+Allocation.java
+--------------------------------------------------------------
+package com.wecp.eventmanagementsystem.entity;
+
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import javax.persistence.*;
+
+@Entity
+public class Allocation {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long allocationID;
+
+    @ManyToOne
+    @JoinColumn(name = "eventID")
+    private Event event;
+
+    @OneToOne
+    @JoinColumn(name = "resourceID")
+    private Resource resource;
+
+    private int quantity;
+
+
+    public Long getAllocationID() {
+        return allocationID;
+    }
+
+    public void setAllocationID(Long allocationID) {
+        this.allocationID = allocationID;
+    }
+
+    public Event getEvent() {
+        return event;
+    }
+
+    public void setEvent(Event event) {
+        this.event = event;
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+}
+
+
+-----------------------------------------------------------------
+Event.java
+---------------------------------------------------------------
+package com.wecp.eventmanagementsystem.entity;
+
+
+import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.Date;
+import java.util.List;
+
+
+@Entity
+public class Event {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long eventID;
+
+    private String title;
+    private String description;
+    private Date dateTime;
+    private String location;
+    private String status;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Allocation> allocations;
+
+    @ManyToOne
+    @JoinColumn(name = "userID")
+    private User user;
+
+    public Long getEventID() {
+        return eventID;
+    }
+
+    public void setEventID(Long eventID) {
+        this.eventID = eventID;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Date getDateTime() {
+        return dateTime;
+    }
+
+    public void setDateTime(Date dateTime) {
+        this.dateTime = dateTime;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public List<Allocation> getAllocations() {
+        return allocations;
+    }
+
+    public void setAllocations(List<Allocation> allocations) {
+        this.allocations = allocations;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    
+}
+
+-----------------------------------------------------------------------------------------
+Resource.java
+------------------------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.entity;
+
+
+import javax.persistence.*;
+
+@Entity
+public class Resource {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long resourceID;
+
+    private String name;
+    private String type;
+    private boolean availability;
+
+    public Long getResourceID() {
+        return resourceID;
+    }
+
+    public void setResourceID(Long resourceID) {
+        this.resourceID = resourceID;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public boolean isAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(boolean availability) {
+        this.availability = availability;
+    }
+}
+
+---------------------------------------------------------------------------
+User.java
+---------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.entity;
+
+
+import javax.persistence.*;
+
+
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long userID;
+
+    private String username;
+    private String password;
+    private String email;
+    private String role;
+
+    public Long getUserID() {
+        return userID;
+    }
+
+    public void setUserID(Long userID) {
+        this.userID = userID;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+}
+
+--------------------------------------------------------------------
+------------------------------------------------------------------
+jwt
+------------------------------------------------------------------
+JwtRequestFilter
+------------------------------------------------------------------
+// package com.wecp.eventmanagementsystem.jwt;
+
+
+// import io.jsonwebtoken.*;
+// import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.context.annotation.Lazy;
+// import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+// import org.springframework.security.core.GrantedAuthority;
+// import org.springframework.security.core.authority.AuthorityUtils;
+// import org.springframework.security.core.context.SecurityContextHolder;
+// import org.springframework.security.core.userdetails.UserDetails;
+// import org.springframework.security.core.userdetails.UserDetailsService;
+// import org.springframework.stereotype.Component;
+// import org.springframework.web.filter.OncePerRequestFilter;
+
+// import javax.servlet.FilterChain;
+// import javax.servlet.ServletException;
+// import javax.servlet.http.HttpServletRequest;
+// import javax.servlet.http.HttpServletResponse;
+// import java.io.IOException;
+// import java.util.Collection;
+
+
+// public class JwtRequestFilter extends OncePerRequestFilter {
+//     @Autowired
+//     private  UserDetailsService userDetailsService;
+//     // private final JwtUtil jwtUtil;
+
+
+//     @Override
+//     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+//                                     FilterChain filterChain) throws ServletException, IOException {
+//         // complete the jwt filter implementation here
+//     }
+// }
+
+---------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
+JwtUtil
+----------------------------------------------------------------------------------------------------------
+// package com.wecp.eventmanagementsystem.jwt;
+
+
+// import com.wecp.eventmanagementsystem.entity.User;
+// import com.wecp.eventmanagementsystem.repository.UserRepository;
+// import io.jsonwebtoken.Claims;
+// import io.jsonwebtoken.Jwts;
+// import io.jsonwebtoken.SignatureAlgorithm;
+// import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.security.core.userdetails.UserDetails;
+// import org.springframework.stereotype.Component;
+
+// import java.util.Date;
+// import java.util.HashMap;
+// import java.util.Map;
+
+
+// import java.util.function.Function;//Extra Import remove fter try
+// import java.security.Key;//Extra Import remove fter try
+
+// /*
+// skeleton code main-->
+
+// public class JwtUtil {
+
+
+
+//     public String generateToken(String username) {
+//         // generate token
+//         return null;
+//     }
+
+//     public Claims extractAllClaims(String token) {
+//         // extract all claims from token
+//         return null;
+//     }
+
+//     public String extractUsername(String token) {
+//         // extract username from token
+//         return null;
+//     }
+
+//     public boolean isTokenExpired(String token) {
+//         // check token is expired
+//         return (Boolean) null;
+//     }
+
+//     public boolean validateToken(String token, UserDetails userDetails) {
+//         // validate the token
+//         return (Boolean) null;
+//     }
+// }
+// */ 
+
+
+// //Trying code
+
+// @Component
+// public class JwtUtil {
+
+//     public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
+
+//     public String generateToken(String username) {
+//         // generate token
+//     }
+
+//     public Claims extractAllClaims(String token) {
+//         // extract all claims from token
+//         return Jwts
+//                 .parserBuilder()
+//                 .setSigningKey(getSignKey())
+//                 .build()
+//                 .parseClaimsJws(token)
+//                 .getBody();
+//     }
+
+//     public String extractUsername(String token) {
+//         // extract username from token
+//         return extractClaim(token, Claims::getSubject);
+//     }
+
+//     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+//         final Claims claims = extractAllClaims(token);
+//         return claimsResolver.apply(claims);
+//     }
+
+//     public boolean isTokenExpired(String token) {
+//         // check token is expired
+//         return (Boolean) null;
+//     }
+
+//     public boolean validateToken(String token, UserDetails userDetails) {
+//         // validate the token
+//         return (Boolean) null;
+//     }
+// }
+
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+repo
+-------------------------------------------------------------------
+AllocationRepo
+-------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.repository;
+
+
+import com.wecp.eventmanagementsystem.entity.Allocation;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+
+@Repository
+public interface AllocationRepository  extends JpaRepository<Allocation,Long> {
+    // extend jpa repository and add custom methods if needed
+}
+
+-------------------------------------------------------------------------
+EventRepo
+-------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.repository;
+
+import com.wecp.eventmanagementsystem.entity.Event;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface EventRepository extends JpaRepository<Event,Long> {
+    // extend jpa repository and add custom method if needed
+}
+
+------------------------------------------------------------------------------
+ResourceRepo
+------------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.repository;
+
+
+import com.wecp.eventmanagementsystem.entity.Resource;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ResourceRepository extends JpaRepository<Resource,Long> {
+    // extend jpa repository and add custom method if needed
+}
+
+-------------------------------------------------------------------------------
+UserRepo
+-------------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.repository;
+
+
+import com.wecp.eventmanagementsystem.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface UserRepository extends JpaRepository<User,Long> {
+    // extend jpa repository and add custom method if needed
+    public User findByUsername(String username);
+}
+
+
+-----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+services
+-----------------------------------------------------------------------------------
+EventService
+-----------------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.service;
+
+
+import com.wecp.eventmanagementsystem.entity.Event;
+import com.wecp.eventmanagementsystem.repository.EventRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.persistence.EntityNotFoundException;
+import java.util.List;
+
+@Service
+public class EventService {
+
+    @Autowired
+    private EventRepository eventRepository;
+
+
+    public Event createEvent(Event event) {
+       // save event in databse
+       return eventRepository.save(event);
+    }
+
+    public List<Event> getAllEvents() {
+        // get all events
+        return eventRepository.findAll();
+    }
+
+    public Event getEventDetails(Long eventId) {
+        // get event by eventId
+        return eventRepository.findById(eventId).get();
+    }
+
+    public Event updateEventSetup(Long eventId, Event updatedEvent) {
+       // update event
+       return eventRepository.save(updatedEvent);
+    }
+}
+
+------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
+ResourceService
+--------------------------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.service;
+
+import com.wecp.eventmanagementsystem.entity.Allocation;
+import com.wecp.eventmanagementsystem.entity.Event;
+import com.wecp.eventmanagementsystem.entity.Resource;
+import com.wecp.eventmanagementsystem.repository.AllocationRepository;
+import com.wecp.eventmanagementsystem.repository.EventRepository;
+import com.wecp.eventmanagementsystem.repository.ResourceRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.persistence.EntityNotFoundException;
+import java.util.List;
+
+@Service
+public class ResourceService {
+
+    @Autowired
+    private ResourceRepository resourceRepository;
+
+    @Autowired
+    private AllocationRepository allocationRepository;
+
+    public Resource addResource(Resource resource) {
+      // add resouce to database
+      return resourceRepository.save(resource);
+    }
+
+    public List<Resource> getAllResources() {
+        // get all resources
+        return resourceRepository.findAll();
+    }
+
+    public void allocateResources(Long eventId, Long resourceId, Allocation allocation) {
+        // check if resource is available or not
+        // if resouce is available then allocate the resource to event  and set availability to false
+        Resource resource = resourceRepository.findById(resourceId).get();
+        if(resource != null){
+            resource.setAvailability(false);
+            resourceRepository.save(resource);//updating the existing resourse that it is not available
+            allocationRepository.save(allocation);//now save the data
+        }
+    }
+}
+
+--------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
+UserService
+--------------------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem.service;
+
+
+import com.wecp.eventmanagementsystem.entity.User;
+import com.wecp.eventmanagementsystem.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.security.core.userdetails.UserDetails;
+// import org.springframework.security.core.userdetails.UserDetailsService;
+// import org.springframework.security.core.userdetails.UsernameNotFoundException;
+// import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+// public class UserService implements UserDetailsService {
+public class UserService{
+    @Autowired
+    private UserRepository userRepository;
+
+
+    public User registerUser(User user) {
+        // encode a password before saving
+        // then register the user
+        return userRepository.save(user);
+    }
+
+    public User getUserByUsername(String username) {
+      // get user by username
+      return userRepository.findByUsername(username);
+    }
+    public List<User> getAllUser(){
+      return userRepository.findAll();
+    }
+    // @Override
+    // public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    //     // load UserDetails by username
+    //     return null;
+    // }
+}
+
+----------------------------------------------------------------------------------------------------------
+EventManagementApplication.java
+----------------------------------------------------------------------------------------------------------
+package com.wecp.eventmanagementsystem;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class EventManagementSystemApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(EventManagementSystemApplication.class, args);
+	}
+
+}
+
+
+---------------------------------------------------------------------------------------------------------
+application props
+-------------------------------------------------------------------------------------------------------------
+# MySQL connection properties
+spring.datasource.url=jdbc:mysql://localhost:3306/eventManagementSystemDb
+spring.datasource.username=root
+spring.datasource.password=hellowecp
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Hibernate properties
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
+spring.jpa.hibernate.ddl-auto=update
+
+server.port=5000
+
+--------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+pom.xml
+-------------------------------------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.7.17</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.wecp</groupId>
+	<artifactId>event-management-system</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>event-management-system</name>
+	<description>Demo project for Spring Boot</description>
+	<properties>
+		<java.version>11</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency> -->
+		<!-- JSON Web Token (JWT) -->
+		<!-- <dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.11.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.11.2</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.11.2</version>
+			<scope>runtime</scope>
+		</dependency> -->
+
+
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+		</dependency>
+		
+		<!-- Hot reload -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<optional>true</optional>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-report-plugin</artifactId>
+				<version>3.1.2</version>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+
+
+

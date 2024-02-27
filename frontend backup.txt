@@ -1,0 +1,1781 @@
+add-resource.html
+
+ 
+<div class="d-flex justify-content-center mt-4">
+  <h2 class="mb-0">Manage Resource</h2>
+ 
+</div>
+<div class="col mt-5 justify-content-center">
+  <div class="card justify-content-center border border-dark shadow-lg">
+      <div class="card-header text-white" style="text-align: center; background-color:#132257;">
+          Add Resource
+      </div>
+      <div class="card-body">
+          <form class="mb-3 mt-md-4" [formGroup]="itemForm" (ngSubmit)="onSubmit()">
+              <div class="row">
+                  <div class="col-md-3">
+                      <div class="mb-3">
+                          <label for="name" class="form-label ">Name : </label>
+                          <!-- create input with formControlName="name"  and with validation  -->
+                          <input type="text" id="name" formControlName="name" class="form-control">
+                          <div *ngIf="itemForm.get('name')?.hasError('required') && itemForm.get('name')?.touched"
+                              class="text-danger">Name is requried</div>
+ 
+ 
+                      </div>
+                  </div>
+                  <div class="col-md-3">
+                      <div class="mb-3">
+                          <label for="type" class="form-label ">Type : </label>
+                          <!-- create input with formControlName="type"  and with validation  -->
+                          <input type="text" id="type" formControlName="type" class="form-control" >
+                          <div *ngIf="itemForm.get('type')?.hasError('required') && itemForm.get('type')?.touched"class="text-danger">
+                              Type is Required
+                          </div>
+ 
+                      </div>
+                  </div>
+                  <div class="col-md-3">
+                      <div class="mb-3">
+ 
+                          <label class="form-label">Availability : </label>
+                          <div class="form-check">
+                              <!-- create radio with formControlName="availability"  and with validation  -->
+ 
+ 
+ 
+                              <label class="form-check-label" for="availability-available">
+                                  <input type="radio" formControlName="availability" value="true" class="text-danger">
+                                  Avaliable
+                              </label><br />
+ 
+                              <label class="form-check-label" for="availability-unavailable">
+                                  <input type="radio" formControlName="availability" value="false" class="text-danger">
+                                  UnAvailable
+                              </label>
+ 
+                              <div
+                                  *ngIf="itemForm.get('availability-available')?.hasError('required') && itemForm.get('availability-available')?.touched">
+                                  Select one option
+                              </div>
+                              <div
+                                  *ngIf="itemForm.get('availability-unavailable')?.hasError('required') && itemForm.get('availability-unavailable')?.touched"> Select one option
+                              </div>
+ 
+                          </div>
+ 
+ 
+ 
+                      </div>
+                  </div>
+ 
+                  <div class="col-md-2">
+                      <div class="d-grid">
+                          <br>
+                          <button class="btn btn-outline-dark mt-1" type="submit">Submit</button>
+                      </div>
+                  </div>
+              </div>
+ 
+ 
+ 
+ 
+          </form>
+ 
+          <div *ngIf="addResourceSuccess$ | async as showMessage" class="alert alert-success mt-4" role="alert">
+            {{ showMessage }}
+          </div>
+          <div *ngIf="addResourceError$ | async as errorMessage" class="alert alert-danger mt-4" role="alert">
+            {{ errorMessage }}
+          </div>
+      </div>
+  </div>
+</div>
+ 
+ 
+ 
+<div class="col mt-3">
+  <div class="card">
+      <div class="card-header text-white" style="text-align: center; background-color:#132257;">Resource Information</div>
+ 
+      <div class="card-body">
+          <div class="table-responsive">
+              <table class="table">
+                  <thead>
+                      <tr>
+                          <th>Sr#</th>
+                          <th>Name</th>
+                          <th>Type</th>
+                          <th>Availability</th>
+ 
+ 
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <!-- //compelte table Information -->
+                      <tr *ngFor="let resource of resourceList$ | async;let i=index">
+                          <td>{{i+1}}</td>
+                          <td>{{resource.name}}</td>
+                          <td>{{resource.type}}</td>
+                          <!-- <td *ngIf="resourceList.availability">{{resource.availability}}</td> -->
+                          <td>
+                              <span *ngIf="resource.availability">Available</span>
+                              <span *ngIf="!resource.availability">Not Available</span>
+                          </td>
+ 
+ 
+                      </tr>
+                  </tbody>
+              </table>
+          </div>
+      </div>
+  </div>
+ 
+</div>
+-----------------------------------------------
+app-resource.ts
+
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpService } from '../../services/http.service';
+import { AuthService } from '../../services/auth.service';
+import { Observable, of } from 'rxjs';
+ 
+@Component({
+  selector: 'app-add-resource',
+  templateUrl: './add-resource.component.html',
+  styleUrls: ['./add-resource.component.scss']
+})
+export class AddResourceComponent implements OnInit {
+ 
+  resourceList$: Observable<any[]> = of([]);
+ 
+  itemForm: FormGroup;
+  formModel:any={status:null};
+  showError:boolean=false;
+  errorMessage:any;
+  resourceList:any=[];
+  assignModel: any={};
+ 
+  showMessage: any;
+  responseMessage: any;
+ 
+  addResourceError$ : Observable<String> = of('');
+  addResourceSuccess$ : Observable<String> = of('');
+ 
+ 
+ 
+  constructor(public router:Router,private formBuilder: FormBuilder, private authService:AuthService,private httpService:HttpService)
+  {
+    this.itemForm = this.formBuilder.group({
+     name:['',[Validators.required]],
+     type:['',[Validators.required]],
+     availability:['',[Validators.required]]
+    })
+ 
+ 
+ }
+  ngOnInit(): void {
+ 
+   this.getResources();
+  }
+ 
+ 
+  onSubmit()
+  {
+   //complete this function
+   let item = {
+
+   }
+ 
+  if(this.itemForm.valid){
+     this.httpService.addResource(this.itemForm.value).subscribe(
+      (res)=>{
+        this.addResourceSuccess$ = of('Resource added successfully!');
+      },
+   (error) => {
+        this.addResourceError$ = of('Unable to add resource');
+      }
+   )
+   this.getResources();
+ 
+  }else{
+    this.markFormGroupTouched(this.itemForm);
+  }
+   
+  }
+ 
+  getResources() {
+     //complete this function
+     this.resourceList$  = this.httpService.getResources();
+  }
+  markFormGroupTouched(itemForm: FormGroup<any>) {
+    throw new Error('Method not implemented.');
+  }
+ 
+}
+
+--------------------------------------------------------
+booking details.html
+
+<div class="d-flex justify-content-between mt-4">
+    <h2 class="mb-0">Manage Events</h2>
+
+</div>
+<div class="row mt-4">
+    <div class="col-md-10">
+        <div class="mb-3">
+            <label for="content" class="form-label ">Event ID</label>
+            create input with name eventID
+            -->
+        </div>
+    </div>
+    <div class="col-md-2">
+        <br>
+        <!-- create button here and call searchEvent() -->
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="card">
+        <div class="card-header">Booking Information</div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Sr#</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Date Time</th>
+                        <th>Location</th>
+                        <th>status</th>
+                        <th>Allocation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- //complete this table Information -->
+                    <tr>
+                        <td>/td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <span>Quality :
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4>Resource:</h4>
+                                        <p>Name:</p>
+                                        <p>Availability:</p>
+                                        <p>Type:</p>
+                                    </div>
+                                </div>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+----------------------------------------------------------------------
+
+booking details.ts
+
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpService } from '../../services/http.service';
+import { AuthService } from '../../services/auth.service';
+
+@Component({
+  selector: 'app-booking-details',
+  templateUrl: './booking-details.component.html',
+  styleUrls: ['./booking-details.component.scss']
+})
+export class BookingDetailsComponent implements OnInit {
+
+  formModel: any = { status: null };
+  showError: boolean = false;
+  errorMessage: any;
+  eventObj: any = [];
+  assignModel: any = {};
+
+  showMessage: any;
+  responseMessage: any;
+  isUpdate: any = false;;
+  constructor(public router: Router, private formBuilder: FormBuilder, private authService: AuthService) {
+
+  }
+  ngOnInit(): void {
+  }
+  searchEvent() {
+    //complete this function
+  }
+
+}
+
+-----------------------------------------------------
+create event.html
+
+<!-- <div class="d-flex justify-content-between mt-4">
+    <h2 class="mb-0">Manage Event</h2>  
+  
+  </div>
+  <div class="row mt-3">
+    <div class="card">
+        <div class="card-header">
+        Create Event
+          </div>
+        <div class="card-body">
+            <form class="mb-3 mt-md-4" [formGroup]="itemForm" (ngSubmit)="onSubmit()">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="content" class="form-label ">Title</label>
+                          <-- create input with formControlName="title" and validation ->
+                      
+                          </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="description" class="form-label ">Description</label>
+                            <-- create input with formControlName="description" and validation ->
+                        
+                          </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="dateTime" class="form-label ">Date Time</label>
+                          <-- create input with formControlName="dateTime" and validation ->
+                   
+                          </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="location" class="form-label ">location</label>
+                           <-- create input with formControlName="location" and validation ->
+                    
+                          </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                           <-- create select with formControlName="status" and validation ->
+                       
+                          <-- <option value="null">Choose Status</option>
+                          <option value="Initiated">Initiated</option>
+                          <option value="Complete">Complete</option> ->
+                    
+                     
+                    </div>
+                    <div class="col-md-2">
+                        <div class="d-grid">
+                            <br>
+                            <button class="btn btn-outline-dark mt-1" type="submit">Submit</button>
+                          </div>
+                    </div>
+                </div>
+              
+               
+              
+               
+              </form>
+        </div>
+    </div>
+  </div>
+  <div class="row mt-3">
+    <div class="card">
+        <div class="card-header">Hospital Information</div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Sr#</th>
+                        <th>Title</th>
+                        <th>Description</th> 
+                        <th>Date Time</th>                           
+                        <th>Location</th>      
+                        <th>status</th>               
+                  
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let event of eventList">
+                      <td>{{event.eventID}}</td>
+                        <td>{{event.title}}</td>
+                        <td>{{event.description}}</td>
+                        <td>{{event.dateTime | date:'dd-MMM-yyyy'}}</td>
+                        <td>{{event.location}}</td>                    
+                        <td>{{event.status}}</td>
+                  
+                       
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+  </div>
+ -->
+
+<div class="banner">
+    <h2>Event Management</h2>
+</div>
+<div class="conatainer2">
+    <div class="form">
+        <form [formGroup]="itemForm" (ngSubmit)="onSubmit()">
+            <div>
+                <h3>Create an event</h3>
+                <div class="mb-3">
+                    <label for="name" class="form-label ">Title :</label>
+                    <!-- create input with formControlName="name"  and with validation  -->
+                    <input type="text" id="title" formControlName="title" class="form-control">
+                    <div *ngIf="itemForm.get('title')?.hasError('required') && itemForm.get('title')?.touched"
+                        class="text-danger">Title is requried</div>
+                </div>
+                <div class="mb-3">
+                    <label for="type" class="form-label ">Description :</label>
+                    <!-- create input with formControlName="type"  and with validation  -->
+                    <input type="text" id="description" formControlName="description" class="form-control">
+                    <div
+                        *ngIf="itemForm.get('description')?.hasError('required') && itemForm.get('description')?.touched">
+                        Description is Required
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="dateTime" class="form-label ">Date:</label>
+                    <!-- create input with formControlName="type"  and with validation  -->
+                    <input type="datetime-local" id="dateTime" formControlName="dateTime" class="form-control">
+                    <div *ngIf="itemForm.get('dateTime')?.hasError('required') && itemForm.get('dateTime')?.touched">
+                        Date Time is Required
+                    </div>
+
+                </div>
+                <div class="mb-3">
+                    <label for="location" class="form-label ">Location:</label>
+                    <!-- create input with formControlName="type"  and with validation  -->
+                    <input type="text" id="location" formControlName="location" class="form-control">
+                    <div *ngIf="itemForm.get('location')?.hasError('required') && itemForm.get('location')?.touched">
+                        Location is Required
+                    </div>
+
+                </div>
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <!-- create select with formControlName="status" and validation -->
+                    <select formControlName="status" class="form-control">
+                        <option value="">Choose Status</option>
+                        <option value="Initiated">Initiated</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                    <!-- <option value="null">Choose Status</option>
+                  <option value="Initiated">Initiated</option>
+                  <option value="Complete">Complete</option> -->
+                </div>
+                <div class="mb-3">
+                    <label for="user" class="form-label">Select User</label>
+                    <!-- create select with formControlName="status" and validation -->
+                    <select formControlName="user" class="form-control">
+                        <option value="">Choose user</option>
+                        <option [ngValue]="user" *ngFor="let user of userList$ | async">{{user.userID}} {{user.username}}</option>
+                        
+                    </select>
+                    <!-- <option value="null">Choose Status</option>
+                  <option value="Initiated">Initiated</option>
+                  <option value="Complete">Complete</option> -->
+                </div>
+                <div class="mb-5">
+                    <br>
+                    <button type="submit" class="btn btn-success"  >Submit</button>
+                </div>
+                <ng-container >
+                    <div *ngIf="success$ | async as success" class="alert alert-success">
+                        {{success}}
+                    </div>
+                    <div *ngIf="error$ | async as error" class="alert alert-danger">
+                        {{error}}
+                    </div>
+                </ng-container>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- </div>
+    </div>
+   
+   
+  </div> -->
+
+<!-- <div class="card ">
+    <div class="card-header">Event Information</div>
+    <div class="row mt-3">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Sr#</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Date Time</th>
+                            <th>Location</th>
+                            <th>status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let event of eventList">
+                            <td>{{event.eventID}}</td>
+                            <td>{{event.title}}</td>
+                            <td>{{event.description}}</td>
+                            <td>{{event.dateTime | date:'dd-MMM-yyyy'}}</td>
+                            <td>{{event.location}}</td>
+                            <td>{{event.status}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div> -->
+
+
+
+
+
+
+
+
+
+
+<!--
+ 
+<div class="vh-100 d-flex justify-content-center align-items-center">
+    <div class="container mt-5">
+        <div class="row d-flex justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6 ">
+                   <div class="card bg-white mt-5">
+                    <div class="card-body p-5 shadow-lg p-3 mb-5 mt-5 bg-white rounded">
+ 
+                        <div class="card-header">Event Information</div>
+                        <div class="row mt-3">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Sr#</th>
+                                                <th>Title</th>
+                                                <th>Description</th>
+                                                <th>Date Time</th>
+                                                <th>Location</th>
+                                                <th>status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let event of eventList">
+                                                <td>{{event.eventID}}</td>
+                                                <td>{{event.title}}</td>
+                                                <td>{{event.description}}</td>
+                                                <td>{{event.dateTime | date:'dd-MMM-yyyy'}}</td>
+                                                <td>{{event.location}}</td>
+                                                <td>{{event.status}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+ 
+ 
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> -->
+-------------------------------------------------------------------
+create event.css
+
+.conatainer2{
+    margin: auto;
+    width: 50%;
+ 
+}
+.banner{
+ 
+    text-align: center;
+    margin-top: 5px;
+    padding: 3px;
+    color: white;
+    width: auto;
+    background-color: #132257;
+}
+ 
+h3{
+    
+    text-align: center;
+    border-radius: 5px;
+ 
+}
+.btn btn-success{
+    margin: auto;
+}
+.form{
+    border: 1px solid;
+    border-radius: 10px;
+    box-shadow: 7px 7px;
+    margin: 3px;
+    padding: 10px;
+    /* background-image: linear-gradient(to right, #b6fbff, #83a4d4); */
+ 
+   
+    margin-bottom: 10px;
+ 
+}
+input,select{
+    box-shadow: 3px 3px;
+}
+ 
+.mb-5{
+    text-align: center;
+}
+label{
+   
+    font-size: 18px;
+}
+.btn:hover{
+     
+        box-shadow: 5px 5px;
+        box-shadow: rgb(16, 125, 161);
+        background-color:#1e183a;
+        border-radius: 0;
+        scale: 1.1;
+        border-radius: 3px;
+ 
+}
+-----------------------------------------------------------------
+
+create event.ts
+
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpService } from '../../services/http.service';
+import { AuthService } from '../../services/auth.service';
+import { Observable, of } from 'rxjs';
+
+
+@Component({
+  selector: 'app-create-event',
+  templateUrl: './create-event.component.html',
+  styleUrls: ['./create-event.component.scss']
+})
+export class CreateEventComponent implements OnInit {
+
+  itemForm: FormGroup;
+  formModel: any = { status: null };
+  showError: boolean = false;
+  errorMessage: any;
+  eventList: any = [];
+  assignModel: any = {};
+
+  showMessage: any;
+  responseMessage: any;
+
+  error$ : Observable<String> = of('');
+  success$ : Observable<String> = of('');
+  userList$: Observable<any>;
+  constructor(public router: Router, private formBuilder: FormBuilder, private authService: AuthService, private httpService:HttpService) {
+    // this.itemForm = inti this form 
+    this.itemForm = formBuilder.group({
+      title:['',[Validators.required]],
+      description:['',[Validators.required]],
+      dateTime:['',[Validators.required]],
+      location:['',[Validators.required]],
+      status:['',[Validators.required]],
+      user:['',Validators.required]
+    });
+  }
+  ngOnInit(): void {
+
+    // this.getEvent();
+    this.getUsers();
+  }
+  getUsers() {
+     //complete this function
+     this.userList$  = this.httpService.getAllUser();
+  }
+
+
+  onSubmit() {
+    //compete this function
+    
+    if(this.itemForm.valid){
+      console.log(this.itemForm.value);
+      
+      this.httpService.addEvent(this.itemForm.value).subscribe((data: any)=>{
+        console.log("addEvent");
+        this.success$ = of("Event created successfully.")
+      },(error)=>{
+        console.log("addEvent Error");
+        this.error$ = of('Unable to create Event.');
+      });
+    }else{
+      alert("Form is not valid.");
+    }
+  }
+}
+----------------------------------------------------------------
+
+dashboard component.html
+
+<div class="row text-center">
+<h1 class="text-capitalize">Event Management System</h1>
+</div>
+
+-------------------------------------------------
+dashboard component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-dashbaord',
+  templateUrl: './dashbaord.component.html',
+  styleUrls: ['./dashbaord.component.scss']
+})
+export class DashbaordComponent {
+
+}
+---------------------------------------
+
+login component.html
+
+<div class="vh-100 d-flex justify-content-center align-items-center">
+    <div class="container">
+      <div class="row d-flex justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          <div class="border border-3 border-primary"></div>
+          <div class="card bg-white">
+            <div class="card-body p-5">
+              <form class="mb-3 mt-md-4" [formGroup]="itemForm" (ngSubmit)="onLogin()">
+                <h2 class="fw-bold mb-2 text-uppercase ">Logistic Management System</h2>
+                <p class=" mb-5">Please enter your user and password!</p>
+                <div class="mb-3">
+                  <label for="username" class="form-label ">Username</label>
+                  <!-- //create input with formControlName username -->
+                </div>
+                <div class="mb-3">
+                  <label for="password" class="form-label ">Password</label>
+                    <!-- //create input with formControlName password -->
+                 
+                </div>
+
+                <div class="d-grid">
+                  <button class="btn btn-outline-dark" type="submit">Login</button>
+                </div>
+              </form>
+              <div>
+                <p class="mb-0  text-center">Don't have an account? <a (click)="registration()"
+                    class="text-primary fw-bold">Registration</a></p>
+              </div>
+              <div *ngIf="showError" class="alert alert-danger" role="alert">
+                {{errorMessage}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+-------------------------------------------------------------------------------
+
+login component.css
+
+a{
+    cursor: pointer;
+}
+
+---------------------------------------------------------------
+
+login component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpService } from '../../services/http.service';
+import { AuthService } from '../../services/auth.service';
+
+
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss']
+})
+export class LoginComponent implements OnInit {
+  itemForm: FormGroup;
+  formModel:any={};
+  showError:boolean=false;
+  errorMessage:any;
+  constructor(public router:Router, public httpService:HttpService, private formBuilder: FormBuilder, private authService:AuthService) 
+    {
+      this.itemForm = this.formBuilder.group({
+        //compelete this 
+       
+    });
+  }
+
+  ngOnInit(): void {
+  }
+  onLogin() {
+  //compelete this 
+}
+
+registration()
+  {
+     //compelete this 
+  }
+}
+--------------------------------------------------------
+
+registration.html
+
+<!DOCTYPE html>
+<html lang="en">
+ 
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>registration</title>
+  <style>
+ 
+  </style>
+</head>
+ 
+<body>
+  <div class="container">
+    <header>
+      <img src="assets/logo.png" alt="Logo" class="logo">
+      <h1 class="app-name">Event Ease</h1>
+      <p class="slogan">Where moments become memories</p>
+    </header>
+    <div class="content">
+      <div class="left-half">
+        <form class="register-form" [formGroup]="itemForm" (ngSubmit)=" onRegister()">
+          <h2>Register User</h2>
+          <div class="mb-3">
+            <label for="username" class="fw-bold form-label">Username</label>
+            <!-- //create input with  formControlName="username" -->
+            <input type="text" name="username" formControlName="username" class="form-control">
+            <div class="text text-danger mt-2" *ngIf="itemForm.get('username')?.hasError('required') &&
+           itemForm.get('username')?.touched ">
+              Username is required
+            </div>
+            <div class="text text-danger mt-2" *ngIf="itemForm.get('username')?.hasError('NoSpaceValidator')">
+              Invalid user name format
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="fw-bold form-label">Email address</label>
+            <!-- //create input with  formControlName="email" -->
+ 
+            <input type="text" name="email" formControlName="email" class="form-control">
+            <div class="text text-danger mt-2" *ngIf="itemForm.get('email')?.hasError('required') &&
+           itemForm.get('email')?.touched ">
+              Email is required
+            </div>
+ 
+            <div class="text text-danger mt-2"
+              *ngIf="!itemForm.get('email')?.hasError('required') && itemForm.get('email')?.hasError('invalidEmail')">
+              Incorrect email format
+            </div>
+ 
+ 
+          </div>
+ 
+          <div class="mb-3">
+            <label for="password" class="fw-bold form-label ">Password</label>
+            <!-- //create input with  formControlName="password" -->
+ 
+            <input type="text" name="password" formControlName="password" class="form-control">
+ 
+            <div class="text text-danger mt-2" *ngIf="itemForm.get('password')?.hasError('required') &&
+           itemForm.get('password')?.touched ">
+              Password is required
+            </div>
+ 
+            <div class="text text-danger mt-2"
+              *ngIf="!itemForm.get('password')?.hasError('required') && itemForm.get('password')?.hasError('invalidPassword')">
+              Incorrect password format
+            </div>
+ 
+          </div>
+ 
+          <div class="mb-3">
+ 
+            <!-- //create input with  formControlName="role" -->
+            <label for="role">Select User Role</label>
+            <select name="role" formControlName="role">
+ 
+              <option value="null">Choose Role</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="STAFF">STAFF</option>
+              <option value="USER">USER</option>
+ 
+            </select>
+ 
+            <div class="text text-danger mt-2" *ngIf="itemForm.get('role')?.hasError('required') &&
+      itemForm.get('role')?.touched ">
+              Please choose role
+            </div>
+ 
+ 
+            <!-- <div
+           *ngIf="itemForm.get('role')?.invalid && (itemForm.get('role')?.dirty || itemForm.get('role')?.touched)"
+           class="ng-dirty">
+           <span class="text-danger">Please choose role.</span>
+         </div> -->
+ 
+ 
+ 
+          </div>
+          <button type="submit">Submit</button>
+          <p class="mb-0  text-center"> <a [routerLink]="['/login']" class="text-primary fw-bold">Go to
+            Login</a></p>
+        </form>
+      </div>
+ 
+      <div *ngIf="showMessage" class="alert alert-success mt-4" role="alert">
+        {{responseMessage}}
+      </div>
+      <div class="right-half">
+        <img src="assets/login.jpg" alt="Image" class="image">
+      </div>
+    </div>
+  </div>
+</body>
+ 
+</html>
+-----------------------------------------------------
+
+registration component.css
+
+body {
+    margin: 0;
+    padding-top: 180px;
+   
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f5f5f5;
+  }
+ 
+  .container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: auto;
+    margin-top: 100px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+ 
+  header {
+    padding: 5px 10px;
+    text-align: center;
+   
+  }
+  span{
+   margin-top: 0px;
+   margin-bottom: 2px;
+  }
+ 
+  .logo {
+    width: 100px;
+    display: inline-block;
+  }
+ 
+  .app-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: rgb(70, 70, 5);
+    font-family: 'Brush Script MT', cursive;
+    margin-bottom: 1px;
+  }
+ 
+  .slogan {
+    font-size: 14px;
+    color: #0a0d93;
+  }
+ 
+  .content {
+    display: flex;
+  }
+ 
+  .left-half {
+    flex: 1;
+    padding: 20px;
+  }
+ 
+  .right-half {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+ 
+  .register-form {
+    max-width: 400px;
+    margin: auto;
+  }
+  .register-form select{
+    width: 90%;
+    margin-bottom: 5px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  .register-form input {
+    width: 90%;
+    margin-bottom: 5px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+ 
+  .register-form button {
+    width: 90%;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+ 
+  .register-form button:hover {
+    background-color: #0056b3;
+  }
+ 
+  .image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+ 
+  .register-form p{
+    width: 90%;
+    padding: 10px;
+    text-align: center;
+  }
+  .register-form p:hover{
+   color: #007bff;
+}
+-------------------------------------------------
+
+registration component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { HttpService } from '../../services/http.service';
+ 
+ 
+@Component({
+  selector: 'app-registration',
+  templateUrl: './registration.component.html',
+  styleUrls: ['./registration.component.scss']
+})
+export class RegistrationComponent {
+ 
+  itemForm: FormGroup;
+  formModel:any={role:null,email:'',password:'',username:''};
+  showMessage:boolean=false;
+  userError$: Observable<string> = of('');
+  userSuccess$: Observable<string> = of('');
+ 
+  responseMessage: any;
+  constructor(public router:Router, private formBuilder: FormBuilder,private httpService:HttpService) {
+   
+    this.itemForm = this.formBuilder.group({
+ 
+      role:[this.formModel.role,[Validators.required]],
+      email:[this.formModel.email,[Validators.required,this.emailValidations]],
+      password:[this.formModel.password,[Validators.required,this.passwordValidations]],
+      username:[this.formModel.username,[Validators.required,this.noSpaceValidations]]
+     
+  });
+}
+ 
+passwordValidations(control: AbstractControl): ValidationErrors | null {
+ 
+  let passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])([a-zA-Z\d!@#%$%^&*]){8,}$/;
+ 
+  if (!passwordRegex.test(control.value)) {
+    return {  invalidPassword: true };
+  } else {
+    return null;
+  }
+}
+ 
+emailValidations(control: AbstractControl): ValidationErrors | null {
+ 
+  let emailRegex = /^[a-zA-Z0-9_.]+@[a-zA-Z0-9]+\.[a-z]{2,}/;
+ 
+  if (!emailRegex.test(control.value)) {
+    return {  invalidEmail: true };
+  } else {
+    return null;
+  }
+}
+ 
+noSpaceValidations(control: AbstractControl): ValidationErrors | null {
+  const controlValue = control.value as string;
+ 
+  if (controlValue.indexOf(' ')>= 0) {
+    return {  NoSpaceValidator: true };
+  } else {
+    return null;
+  }
+}
+ 
+  ngOnInit(): void {
+  }
+  onRegister()
+  {
+  //complete this function
+    if(this.itemForm.valid){
+      this.httpService.registerUser(this.itemForm.value).subscribe(
+        (res: any) => {
+          console.log("success");
+          this.userSuccess$ = of("User created successfully");
+        },
+        (error) => {
+          console.log("error");
+          this.userError$ = of("Unable to create user");
+        }
+      )
+    }
+  }
+ 
+ 
+}
+------------------------------------------------------------------------------
+
+resource allocate.html
+
+<div class="d-flex justify-content-between mt-4">
+    <h2 class="mb-0">Manage Resource Allocation</h2>  
+  
+  </div>
+  <div class="row mt-3">
+    <div class="card">
+        <div class="card-header">
+        Add Resource Allocation
+          </div>
+        <div class="card-body">
+            <form class="mb-3 mt-md-4" [formGroup]="itemForm" (ngSubmit)="onSubmit()">
+                <div class="row">
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label for="eventId" class="form-label">Event</label>
+                         <!-- create select with formControlName="eventId" and validation -->
+               
+                        <option value="null">Choose Event</option>
+                 
+                
+                   
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label for="resourceId" class="form-label">Resource</label>
+                    <!-- create select with formControlName="resourceID" and validation -->
+                     
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label for="quantity" class="form-label">Quantity</label>
+                        <!-- create input with formControlName="quantity" and validation -->
+                    
+                  
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="d-grid">
+                      <br>
+                      <button type="submit" class="btn btn-outline-dark mt-1" eventId="submit">Submit</button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+              <div *ngIf="showMessage" class="alert alert-success mt-4" role="alert">
+                {{ responseMessage }}
+              </div>
+              <div *ngIf="showError" class="alert alert-danger" role="alert">
+                {{errorMessage}}
+              </div>
+              
+        </div>
+    </div>
+  </div>
+
+-----------------------------------------------------------------------------------
+
+resource allocate.ts
+
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpService } from '../../services/http.service';
+import { AuthService } from '../../services/auth.service';
+@Component({
+  selector: 'app-resource-allocate',
+  templateUrl: './resource-allocate.component.html',
+  styleUrls: ['./resource-allocate.component.scss']
+})
+export class ResourceAllocateComponent implements OnInit {
+  itemForm: FormGroup; 
+  formModel:any={status:null};
+  showError:boolean=false;
+  errorMessage:any;
+  resourceList:any=[];
+  assignModel: any={};
+
+  showMessage: any;
+  responseMessage: any;
+  eventList: any=[];
+  constructor(public router:Router, public httpService:HttpService, private formBuilder: FormBuilder, private authService:AuthService) 
+    {
+      // this.itemForm =init form 
+   
+  }
+  ngOnInit(): void {
+
+  }
+ 
+  onSubmit()
+  {
+    //complete this function
+  }
+    
+    getEvent() {
+     //complete this function
+    }
+
+  getResources() {
+     //complete this function
+  }
+  
+}
+----------------------------------------------------------
+
+view events.html
+
+<div class="d-flex justify-content-between mt-4">
+    <h2 class="mb-0">Manage Events</h2>  
+  
+  </div>
+  <div class="row mt-3">
+    <div class="card">
+        <div class="card-header">
+        View & Update  Events
+          </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-10">
+                    <div class="mb-3">
+                        <label for="content" class="form-label ">Event ID</label>
+                        //input for search input
+                      </div>
+                </div>
+                <div class="col-md-2">
+                    <br>
+                   <!-- create button here and call this function searchEvent() -->
+                </div>
+            </div>
+            <form *ngIf="isUpdate" class="mb-3 mt-md-4" [formGroup]="itemForm" (ngSubmit)="onSubmit()">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="content" class="form-label ">Title</label>
+                          <!-- create input with formControlName="title" with validation message -->
+                         
+                          </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="description" class="form-label ">Description</label>
+                                                    <!-- create input with formControlName="description" with validation message -->
+                      
+                          </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="dateTime" class="form-label ">Date Time</label>
+                          <!-- create input with formControlName="dateTime" with validation message -->
+                       
+                          </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="location" class="form-label ">location</label>
+                                <!-- create input with formControlName="location" with validation message -->
+                          
+                          </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                                <!-- create input with formControlName="status" with validation message -->
+                
+                          <!-- <option value="null">Choose Status</option>
+                          <option value="Initiated">Initiated</option>
+                          <option value="Complete">Complete</option>
+            -->
+                      
+                      </div>
+                    <div class="col-md-2">
+                        <div class="d-grid">
+                            <br>
+                            <button class="btn btn-outline-dark mt-1" type="submit">Submit</button>
+                          </div>
+                    </div>
+                </div>
+              
+               
+              
+               
+              </form>
+              <div *ngIf="showMessage" class="alert alert-success mt-4" role="alert">
+                {{ responseMessage }}
+              </div>
+              <div *ngIf="showError" class="alert alert-danger" role="alert">
+                {{errorMessage}}
+              </div>
+        </div>
+    </div>
+  </div>
+  <div class="row mt-3">
+    <div class="card">
+        <div class="card-header">Hospital Information</div>
+    </div>
+    <div  class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Sr#</th>
+                        <th>Title</th>
+                        <th>Description</th> 
+                        <th>Date Time</th>                           
+                        <th>Location</th>      
+                        <th>status</th>   
+                        <th>Action</th>            
+                  
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                      <td>{{eventObj.eventID}}</td>
+                        <td>{{eventObj.title}}</td>
+                        <td>{{eventObj.description}}</td>
+                        <td>{{eventObj.dateTime | date:'dd-MMM-yyyy'}}</td>
+                        <td>{{eventObj.location}}</td>                    
+                        <td>{{eventObj.status}}</td>
+
+                        <td>
+                            <button (click)="edit(eventObj)" *ngIf="eventObj.eventID" class="btn btn-warning">Update</button>
+                        </td>
+                       
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+  </div>
+
+-----------------------------------------------------
+
+view events.ts
+
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpService } from '../../services/http.service';
+import { AuthService } from '../../services/auth.service';
+
+
+@Component({
+  selector: 'app-view-events',
+  templateUrl: './view-events.component.html',
+  styleUrls: ['./view-events.component.scss']
+})
+export class ViewEventsComponent implements OnInit {
+
+  itemForm: FormGroup; 
+  formModel:any={status:null};
+  showError:boolean=false;
+  errorMessage:any;
+  eventObj:any=[];
+  assignModel: any={};
+
+  showMessage: any;
+  responseMessage: any;
+  isUpdate: any=false;;
+  constructor(public router:Router, public httpService:HttpService, private formBuilder: FormBuilder, private authService:AuthService) 
+    {
+      // this.itemForm =complete this form init
+   
+  }
+  ngOnInit(): void {
+
+  
+  }
+  searchEvent() {
+  //complete this function
+    
+  
+  }
+
+ 
+  onSubmit()
+  {
+    //complete this function
+  }
+  edit(val:any)
+  {
+    this.isUpdate=true;
+    let dateTime=new Date(val.dateTime);
+    this.itemForm.patchValue({
+    //complete this function
+
+    })
+  }
+
+  
+}
+-----------------------------------------------------------------------
+
+app component.html
+
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <!-- Logo and website name on the left -->
+  <a class="navbar-brand" href="#">
+    <img src="assets/logo.png" alt="Logo" height="40">
+    Event Ease
+  </a>
+ 
+  <!-- Collapse button for smaller screens -->
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+ 
+  <!-- Navigation options in the middle -->
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#">Option 1</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Option 2</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Option 3</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Option 4</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Option 5</a>
+      </li>
+    </ul>
+ 
+    <!-- Logout button on the right -->
+    <div>
+      <a href="#" class="btn btn-outline-danger">Logout</a>
+    </div>
+  </div>
+</nav>
+ 
+<body  >
+  <div class="container mt-4 mx-5">
+    <router-outlet>    
+    </router-outlet>
+  </div>
+
+</body>
+
+------------------------------------------------------------------------
+
+app component.css
+
+.search mb-3{
+    width: 100%;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* background-color: #111523; */
+    background-color: #132257;
+    /* background-image: linear-gradient(to right, #0f0c29, #302b63,#132257); */
+    padding: 10px 20px;
+  }
+  .common{
+    margin-left: 10px;
+  }
+  .logo img {
+    border-radius: 25px;
+    height: 40px; /* Adjust height as needed */
+  }
+  .slogan{
+    font-size: 12px;
+    color: rgb(255, 255, 255);
+  }
+  .appName{
+    margin-left: 5px;
+    font-weight: bold;
+    color:rgb(255, 242, 0);
+    font-size: x-large;
+    font-family: 'Brush Script MT', cursive;
+  }
+ 
+  .navbar-options a {
+    margin-right: 20px;
+    text-decoration: none;
+    color: #333;
+    padding:5px;
+    color: white;
+  }
+  .navbar-options a:hover{
+    background-color: rgb(255, 255, 255);
+    color: rgb(68, 67, 116);
+    border: 1px solid;
+    border-radius: 5px;
+    box-shadow: 1px 1px;
+    font-weight: bold;
+  }
+ 
+ 
+  .logout a {
+    text-decoration: none;
+    color: #f00b0b;
+    font-weight: bolder;
+  }
+  .logout a:hover{
+   
+    border: 1px solid;
+    border-radius: 5px;
+    box-shadow: 1px 2px;
+    padding: 3px;
+    padding-left: 7px;
+    padding-right: 7px;
+    background-color: #f00b0b;
+    color: #000000;
+  }
+---------------------------------------------------
+
+app component.ts
+
+import { Component } from '@angular/core';
+import { AuthService } from '../services/auth.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
+})
+export class AppComponent {
+  IsLoggin:any=false;
+  roleName: string | null;
+  constructor(private authService: AuthService, private router:Router)
+  {
+   
+    this.IsLoggin=authService.getLoginStatus;
+    this.roleName=authService.getRole;
+    if(this.IsLoggin==false)
+    {
+      this.router.navigateByUrl('/login'); 
+    
+    }
+  }
+  logout()
+{
+  this.authService.logout();
+  window.location.reload();
+}
+
+}
+-------------------------------------------------------------
+
+app module.ts
+
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './login/login.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RegistrationComponent } from './registration/registration.component';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpService } from '../services/http.service';
+import { DashbaordComponent } from './dashbaord/dashbaord.component';
+import { CreateEventComponent } from './create-event/create-event.component';
+import { AddResourceComponent } from './add-resource/add-resource.component';
+import { ResourceAllocateComponent } from './resource-allocate/resource-allocate.component';
+import { ViewEventsComponent } from './view-events/view-events.component';
+import { BookingDetailsComponent } from './booking-details/booking-details.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent,
+      RegistrationComponent,
+      DashbaordComponent,    
+      CreateEventComponent,
+      AddResourceComponent,
+      ResourceAllocateComponent,
+      ViewEventsComponent,
+      BookingDetailsComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule,
+    ReactiveFormsModule,
+    HttpClientModule 
+  ],
+  providers: [HttpService,HttpClientModule ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+-------------------------------------------------------------
+
+auth service.ts
+
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthService {
+
+  private token: string | null = null;
+  private isLoggedIn: boolean = false;
+
+  constructor() {}
+
+  // Method to save token received from login
+  saveToken(token: string) {
+    //complete this function
+   //complete this function
+  }
+   SetRole(role:any)
+  {
+   //complete this function
+  }
+  get getRole ():string|null
+  {
+   //complete this function
+   return null;
+  }
+  // Method to retrieve login status
+  get getLoginStatus(): boolean {
+  
+     //complete this function
+   return true;
+  }
+  getToken(): string | null {
+ //complete this function
+ return null;
+  }
+  logout(){
+  //complete this function
+   }
+}
+---------------------------------------------------
+
+http service.ts
+
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, retry } from 'rxjs';
+import { environment } from '../environments/environment.development';
+import { AuthService } from './auth.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class HttpService {
+  public serverName=environment.apiUrl;
+  constructor(private http : HttpClient) {
+
+   }
+ 
+  getEventById(eventId:any):Observable<any> {
+   return null;
+//complete this function
+  }
+  updateEvent(newEvent:any,eventId:any):Observable<any> {
+   //complete this function
+   return null;
+  }
+  // assignDriver(driverid: any, cargoId: any): Observable<any> {
+  //  //complete this function
+  // }
+  
+  // getAssignOrders(driverId:any):Observable<any> {
+  // //complete this function
+  // }
+  getResources():Observable<any> {
+   //complete this function
+   return this.http.get(`${this.serverName}/api/planner/resources`);
+  }
+
+  addResource(data : any): Observable<any> {
+    return this.http.post(`${this.serverName}/api/planner/resource`,data);
+  }
+
+  getEvents():Observable<any> {
+  //complete this function
+  return null;
+  }
+  addEvent(details:any):Observable<any> {
+  //complete this function
+  console.log(details);
+  
+  return this.http.post(`${this.serverName}/api/planner/event`,details);
+  }
+  Login(details:any):Observable<any> { 
+  //complete this function
+  return null;
+  }
+  registerUser(details:any):Observable<any> {
+   //complete this function
+   console.log(details);
+   
+   return this.http.post(`${this.serverName}/api/user/register`,details);
+  }
+  getAllUser():Observable<any>{
+    return this.http.get(`${this.serverName}/api/users`);
+  }
+}
+-----------------------------------------------------------------------------------
+
+ 
